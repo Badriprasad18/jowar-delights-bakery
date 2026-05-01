@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Banknote, Loader2 } from "lucide-react";
 import type { View } from "@/components/jowar/Navbar";
+import type { ConfirmedOrder } from "@/views/ConfirmationView";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -17,7 +18,13 @@ const schema = z.object({
   address: z.string().trim().min(10, "Address must be at least 10 characters").max(500),
 });
 
-export function CheckoutView({ setView }: { setView: (v: View) => void }) {
+export function CheckoutView({
+  setView,
+  onConfirmed,
+}: {
+  setView: (v: View) => void;
+  onConfirmed: (o: ConfirmedOrder) => void;
+}) {
   const { items, totalItems, totalPrice, clear } = useCart();
   const { user } = useAuth();
   const [form, setForm] = useState({ name: "", phone: "", address: "" });
@@ -56,7 +63,7 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
       const orderItems = items.map((i) => ({
         id: i.id, name: i.name, price: i.price, qty: i.qty, unit: i.unit,
       }));
-      const { error } = await supabase.from("orders").insert({
+      const { data: inserted, error } = await supabase.from("orders").insert({
         user_id: user.id,
         customer_name: parsed.data.name,
         phone: parsed.data.phone,
@@ -66,13 +73,25 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
         discount,
         total: grandTotal,
         status: "pending",
-      });
+      }).select("id, created_at").single();
       if (error) throw error;
-      toast.success("Order placed! Pay cash on delivery.", {
-        description: "We'll call you soon to confirm.",
+      toast.success("Order placed! Pay cash on delivery.");
+      const id = inserted?.id ?? "";
+      const orderNumber = `JD-${id.slice(0, 8).toUpperCase()}`;
+      onConfirmed({
+        id,
+        orderNumber,
+        customerName: parsed.data.name,
+        phone: parsed.data.phone,
+        address: parsed.data.address,
+        items: orderItems,
+        subtotal: totalPrice,
+        discount,
+        total: grandTotal,
+        createdAt: inserted?.created_at ?? new Date().toISOString(),
       });
       clear();
-      setView("orders");
+      setView("confirmation");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       toast.error(msg);

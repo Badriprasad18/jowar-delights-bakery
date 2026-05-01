@@ -4,7 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 
-export type View = "home" | "shop" | "cart" | "checkout" | "auth" | "admin" | "team" | "orders";
+export type View = "home" | "shop" | "cart" | "checkout" | "confirmation" | "auth" | "admin" | "team" | "orders";
 
 export function Navbar({ view, setView }: { view: View; setView: (v: View) => void }) {
   const { totalItems } = useCart();
@@ -26,8 +26,11 @@ export function Navbar({ view, setView }: { view: View; setView: (v: View) => vo
 
         <nav className="hidden items-center gap-5 md:flex">
           <button onClick={() => setView("home")} className={navCls(view === "home")}>Home</button>
-          <button onClick={() => setView("shop")} className={navCls(view === "shop")}>Shop</button>
-          {user && (
+          {/* Customers shop & track orders. Admin/Team focus on dashboards. */}
+          {!isAdmin && !isTeam && (
+            <button onClick={() => setView("shop")} className={navCls(view === "shop")}>Shop</button>
+          )}
+          {user && !isAdmin && !isTeam && (
             <button onClick={() => setView("orders")} className={navCls(view === "orders")}>My Orders</button>
           )}
           {isTeam && !isAdmin && (
@@ -43,15 +46,17 @@ export function Navbar({ view, setView }: { view: View; setView: (v: View) => vo
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button onClick={() => setView("cart")} variant="secondary" size="sm" className="relative">
-            <ShoppingCart className="h-4 w-4" />
-            <span className="ml-2 hidden sm:inline">Cart</span>
-            {totalItems > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground shadow-[var(--shadow-gold)]">
-                {totalItems}
-              </span>
-            )}
-          </Button>
+          {!isAdmin && !isTeam && (
+            <Button onClick={() => setView("cart")} variant="secondary" size="sm" className="relative">
+              <ShoppingCart className="h-4 w-4" />
+              <span className="ml-2 hidden sm:inline">Cart</span>
+              {totalItems > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground shadow-[var(--shadow-gold)]">
+                  {totalItems}
+                </span>
+              )}
+            </Button>
+          )}
           {user ? (
             <Button onClick={async () => { await signOut(); setView("home"); }} size="sm" variant="ghost">
               <LogOut className="h-4 w-4" />
@@ -66,8 +71,8 @@ export function Navbar({ view, setView }: { view: View; setView: (v: View) => vo
       {/* Mobile secondary nav */}
       <div className="flex items-center justify-around border-t border-border/40 bg-card/40 px-2 py-1.5 text-xs md:hidden">
         <MobBtn active={view === "home"} onClick={() => setView("home")}>Home</MobBtn>
-        <MobBtn active={view === "shop"} onClick={() => setView("shop")}>Shop</MobBtn>
-        {user && <MobBtn active={view === "orders"} onClick={() => setView("orders")}>Orders</MobBtn>}
+        {!isAdmin && !isTeam && <MobBtn active={view === "shop"} onClick={() => setView("shop")}>Shop</MobBtn>}
+        {user && !isAdmin && !isTeam && <MobBtn active={view === "orders"} onClick={() => setView("orders")}>Orders</MobBtn>}
         {isTeam && !isAdmin && <MobBtn active={view === "team"} onClick={() => setView("team")}>Team</MobBtn>}
         {isAdmin && <MobBtn active={view === "admin"} onClick={() => setView("admin")}>Admin</MobBtn>}
       </div>
