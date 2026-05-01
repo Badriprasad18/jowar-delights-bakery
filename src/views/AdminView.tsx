@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, Users, Package, Boxes } from "lucide-react";
 import { OrderList } from "@/components/jowar/OrderList";
@@ -24,7 +19,6 @@ export function AdminView() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [roleMap, setRoleMap] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
-  const [emailToPromote, setEmailToPromote] = useState("");
 
   const load = async () => {
     setLoading(true);
