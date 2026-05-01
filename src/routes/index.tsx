@@ -2,15 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ProductsProvider } from "@/context/ProductsContext";
 import { Navbar, type View } from "@/components/jowar/Navbar";
 import { HomeView } from "@/views/HomeView";
 import { ShopView } from "@/views/ShopView";
 import { CartView } from "@/views/CartView";
 import { CheckoutView } from "@/views/CheckoutView";
+import { ConfirmationView, type ConfirmedOrder } from "@/views/ConfirmationView";
 import { AuthView } from "@/views/AuthView";
 import { AdminView } from "@/views/AdminView";
 import { TeamView } from "@/views/TeamView";
 import { MyOrdersView } from "@/views/MyOrdersView";
+import { ForbiddenView } from "@/views/ForbiddenView";
 import { Toaster } from "@/components/ui/sonner";
 import { Loader2 } from "lucide-react";
 
@@ -27,15 +30,18 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Shell />
-      </CartProvider>
+      <ProductsProvider>
+        <CartProvider>
+          <Shell />
+        </CartProvider>
+      </ProductsProvider>
     </AuthProvider>
   );
 }
 
 function Shell() {
   const [view, setView] = useState<View>("home");
+  const [lastOrder, setLastOrder] = useState<ConfirmedOrder | null>(null);
   const { user, roles, loading } = useAuth();
 
   // After login, route to role-appropriate landing page (only on first auth event)
@@ -51,10 +57,15 @@ function Shell() {
   }, [user, roles, loading, view, didAutoRoute]);
 
   // Guard role-only pages
-  const blocked =
-    (view === "admin" && !roles.includes("admin")) ||
-    (view === "team" && !roles.includes("team") && !roles.includes("admin")) ||
-    ((view === "checkout" || view === "orders") && !user);
+  const isAdmin = roles.includes("admin");
+  const isTeam = roles.includes("team");
+  const needsAuth = (view === "checkout" || view === "orders") && !user;
+  const adminBlocked = view === "admin" && !isAdmin;
+  const teamBlocked = view === "team" && !isTeam && !isAdmin;
+  const forbiddenReason =
+    adminBlocked ? "Admin access only." :
+    teamBlocked ? "Team or Admin access required." : "";
+  const showForbidden = !!user && (adminBlocked || teamBlocked);
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,14 +75,17 @@ function Shell() {
           <div className="flex min-h-[60vh] items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : blocked ? (
+        ) : needsAuth ? (
           <AuthView onAuthed={() => { /* effect routes after roles load */ }} />
+        ) : showForbidden ? (
+          <ForbiddenView setView={setView} reason={forbiddenReason} />
         ) : (
           <>
             {view === "home" && <HomeView setView={setView} />}
             {view === "shop" && <ShopView />}
             {view === "cart" && <CartView setView={setView} />}
-            {view === "checkout" && <CheckoutView setView={setView} />}
+            {view === "checkout" && <CheckoutView setView={setView} onConfirmed={setLastOrder} />}
+            {view === "confirmation" && <ConfirmationView order={lastOrder} setView={setView} />}
             {view === "auth" && <AuthView onAuthed={() => setDidAutoRoute(false)} />}
             {view === "admin" && <AdminView />}
             {view === "team" && <TeamView />}
