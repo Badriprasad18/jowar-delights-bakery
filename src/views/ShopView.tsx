@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { CATEGORIES, PRODUCTS } from "@/data/products";
+import { CATEGORIES } from "@/data/products";
+import { useProducts } from "@/context/ProductsContext";
 import { ProductCard } from "@/components/jowar/ProductCard";
 import { HealthBadges } from "@/components/jowar/Badges";
 
 export function ShopView() {
   const [active, setActive] = useState<string>("All");
+  const { products } = useProducts();
   const tabs = ["All", ...CATEGORIES];
-  const filtered = active === "All" ? PRODUCTS : PRODUCTS.filter((p) => p.category === active);
+  const filtered = active === "All" ? products : products.filter((p) => p.category === active);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">

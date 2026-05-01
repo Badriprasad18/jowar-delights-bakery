@@ -6,6 +6,7 @@ export type Product = {
   category: string;
   preorder?: boolean;
   image: string;
+  badges?: string[];
 };
 
 export const CATEGORIES = [
@@ -14,6 +15,15 @@ export const CATEGORIES = [
   "Cakes",
   "Breads & Bases",
   "Biscuits & Rusks",
+] as const;
+
+export const BADGE_OPTIONS = [
+  "Gluten-Free",
+  "Diabetic-Friendly",
+  "Vegan",
+  "No Preservatives",
+  "High-Fiber",
+  "Sugar-Free",
 ] as const;
 
 import c1 from "@/assets/products/c1.jpg";

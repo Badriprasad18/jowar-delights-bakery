@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Users, Package } from "lucide-react";
+import { Loader2, Users, Package, Boxes } from "lucide-react";
 import { OrderList } from "@/components/jowar/OrderList";
+import { ProductManager } from "@/components/jowar/ProductManager";
 
 type ProfileRow = {
   id: string;
@@ -23,7 +19,6 @@ export function AdminView() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [roleMap, setRoleMap] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
-  const [emailToPromote, setEmailToPromote] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -68,6 +63,11 @@ export function AdminView() {
       <section>
         <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-bold"><Package className="h-5 w-5 text-primary" />All Orders</h2>
         <OrderList scope="all" canEdit />
+      </section>
+
+      <section>
+        <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-bold"><Boxes className="h-5 w-5 text-primary" />Manage Products</h2>
+        <ProductManager />
       </section>
 
       <section>
