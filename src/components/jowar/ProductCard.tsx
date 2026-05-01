@@ -25,6 +25,15 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
       <h3 className="font-serif text-base font-semibold leading-tight text-foreground">{product.name}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{product.unit}</p>
+      {product.badges && product.badges.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {product.badges.map((b) => (
+            <span key={b} className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              {b}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="mt-auto flex items-center justify-between pt-4">
         <span className="text-lg font-bold text-primary">₹{product.price}</span>
         <Button
