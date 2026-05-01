@@ -1,4 +1,4 @@
-import { ShoppingCart, LogOut, ShieldCheck, Users2, ClipboardList } from "lucide-react";
+import { ShoppingCart, LogOut, ShieldCheck, Users2 } from "lucide-react";
 import logo from "@/assets/jowar-logo.jpeg";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
