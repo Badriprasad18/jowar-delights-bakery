@@ -23,9 +23,7 @@ export function CartView({ setView }: { setView: (v: View) => void }) {
       <div className="space-y-4">
         {items.map((i) => (
           <div key={i.id} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl font-serif text-2xl text-primary" style={{ background: "var(--gradient-hero)" }}>
-              {i.name.charAt(0)}
-            </div>
+            <img src={i.image} alt={i.name} loading="lazy" width={768} height={768} className="h-16 w-16 shrink-0 rounded-xl object-cover" />
             <div className="flex-1">
               <h3 className="font-semibold text-foreground">{i.name}</h3>
               <p className="text-xs text-muted-foreground">{i.unit} • ₹{i.price} each</p>

@@ -1,17 +1,27 @@
 import { useState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/context/CartContext";
-import { WHATSAPP_NUMBER } from "@/data/products";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Banknote } from "lucide-react";
+import { Banknote, Loader2 } from "lucide-react";
 import type { View } from "@/components/jowar/Navbar";
+
+const schema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  phone: z.string().trim().regex(/^\d{10}$/, "Enter a valid 10-digit phone number"),
+  address: z.string().trim().min(10, "Address must be at least 10 characters").max(500),
+});
 
 export function CheckoutView({ setView }: { setView: (v: View) => void }) {
   const { items, totalItems, totalPrice, clear } = useCart();
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", phone: "", address: "" });
+  const [busy, setBusy] = useState(false);
 
   const discount = totalPrice >= 2000 ? Math.round(totalPrice * 0.1) : 0;
   const grandTotal = totalPrice - discount;
@@ -25,30 +35,50 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
     );
   }
 
-  const placeOrder = () => {
-    if (!form.name.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast.error("Please fill all the fields");
+  const placeOrder = async () => {
+    // Validation: empty cart guard already above; validate form
+    const parsed = schema.safeParse(form);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0].message);
       return;
     }
-    if (!/^\d{10}$/.test(form.phone.trim())) {
-      toast.error("Enter a valid 10-digit phone number");
+    if (items.length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+    if (!user) {
+      toast.error("Please log in to place an order");
       return;
     }
 
-    const lines = items.map((i) => `${i.qty}x ${i.name} (${i.unit}) – ₹${i.qty * i.price}`).join("\n");
-    const msg =
-      `Hi, I want to place a COD order:\n\n` +
-      `Items:\n${lines}\n\n` +
-      (discount > 0 ? `Subtotal: ₹${totalPrice}\nDiscount (10%): -₹${discount}\n` : "") +
-      `Total: ₹${grandTotal}\n\n` +
-      `Name: ${form.name}\nPhone: ${form.phone}\nAddress: ${form.address}\n\n` +
-      `Payment: Cash on Delivery`;
-
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-    toast.success("Order sent to WhatsApp!");
-    clear();
-    setView("home");
+    setBusy(true);
+    try {
+      const orderItems = items.map((i) => ({
+        id: i.id, name: i.name, price: i.price, qty: i.qty, unit: i.unit,
+      }));
+      const { error } = await supabase.from("orders").insert({
+        user_id: user.id,
+        customer_name: parsed.data.name,
+        phone: parsed.data.phone,
+        address: parsed.data.address,
+        items: orderItems,
+        subtotal: totalPrice,
+        discount,
+        total: grandTotal,
+        status: "pending",
+      });
+      if (error) throw error;
+      toast.success("Order placed! Pay cash on delivery.", {
+        description: "We'll call you soon to confirm.",
+      });
+      clear();
+      setView("orders");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to place order";
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -57,16 +87,16 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
         <h1 className="mb-6 font-serif text-3xl font-bold text-foreground">Checkout</h1>
         <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" />
+            <Label htmlFor="name">Full Name *</Label>
+            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" maxLength={100} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">Phone Number *</Label>
             <Input id="phone" type="tel" maxLength={10} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })} placeholder="10-digit mobile" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="address">Delivery Address</Label>
-            <Textarea id="address" rows={4} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="House no, street, area, Bhubaneswar, pincode" />
+            <Label htmlFor="address">Delivery Address *</Label>
+            <Textarea id="address" rows={4} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="House no, street, area, city, pincode" maxLength={500} />
           </div>
         </div>
 
@@ -74,7 +104,7 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
           <Banknote className="mt-0.5 h-5 w-5 text-accent" />
           <div>
             <p className="font-semibold text-foreground">Cash on Delivery</p>
-            <p className="text-sm text-muted-foreground">You will pay in cash at delivery.</p>
+            <p className="text-sm text-muted-foreground">You will pay in cash when your order arrives.</p>
           </div>
         </div>
       </div>
@@ -101,8 +131,9 @@ export function CheckoutView({ setView }: { setView: (v: View) => void }) {
           <span>Total</span>
           <span className="text-primary">₹{grandTotal}</span>
         </div>
-        <Button className="mt-5 w-full" size="lg" onClick={placeOrder}>
-          Place Order via WhatsApp
+        <Button className="mt-5 w-full" size="lg" onClick={placeOrder} disabled={busy}>
+          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Place COD Order
         </Button>
         <p className="mt-3 text-center text-xs text-muted-foreground">May contain nuts</p>
       </aside>

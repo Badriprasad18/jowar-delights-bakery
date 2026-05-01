@@ -13,11 +13,15 @@ export function ProductCard({ product }: { product: Product }) {
           Pre-order
         </span>
       )}
-      <div
-        className="mb-4 flex h-32 items-center justify-center rounded-xl text-4xl"
-        style={{ background: "var(--gradient-hero)" }}
-      >
-        <span className="font-serif text-3xl text-primary">{product.name.charAt(0)}</span>
+      <div className="mb-4 overflow-hidden rounded-xl">
+        <img
+          src={product.image}
+          alt={product.name}
+          loading="lazy"
+          width={768}
+          height={768}
+          className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
       </div>
       <h3 className="font-serif text-base font-semibold leading-tight text-foreground">{product.name}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{product.unit}</p>

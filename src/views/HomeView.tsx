@@ -15,7 +15,7 @@ export function HomeView({ setView }: { setView: (v: View) => void }) {
           <div className="space-y-6">
             <HealthBadges />
             <h1 className="font-serif text-4xl font-bold leading-tight text-foreground md:text-6xl">
-              Healthy <span className="text-primary">Jowar</span> Bakery in Bhubaneswar
+              Wholesome <span className="text-primary">Jowar</span> Bakes, Crafted with Care
             </h1>
             <p className="max-w-md text-base text-muted-foreground md:text-lg">
               Artisanal cookies, muffins, breads & cakes — baked with sorghum (jowar) for wholesome,
@@ -77,7 +77,7 @@ export function HomeView({ setView }: { setView: (v: View) => void }) {
           {[
             { icon: Heart, title: "Diabetic-Friendly", desc: "Low glycemic index keeps blood sugar steady." },
             { icon: Award, title: "100% Gluten-Free", desc: "Naturally gluten-free ancient grain — gentle on your gut." },
-            { icon: Sparkles, title: "No Preservatives", desc: "Baked fresh in Bhubaneswar with clean ingredients." },
+            { icon: Sparkles, title: "No Preservatives", desc: "Baked fresh daily with clean, simple ingredients." },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
